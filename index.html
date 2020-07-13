@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- jQuery UI -->
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script src="scripts/userMember2.js"></script>
+
+    <title>Sample1</title>
+
+    <style type="text/css">
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        ul, li {
+            list-style: none;
+        }
+
+        article {
+            width: 30%;
+            padding: 16px 0;
+            /* background-color: rgba(255, 0, 255, 0.2); */
+        }
+
+        section.wrap {
+            width: 100%;
+        }
+
+        .wrap:nth-child(1) {
+            padding: 16px 0 0;
+            border: 1px solid rgba(128, 128, 128, 0.5);
+        }
+
+        #form, #list {
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        #form {
+            padding: 0 0 24px;
+            /* background-color: rgba(0, 255, 255, 0.2); */
+        }
+        #form > dt:last-child {
+            padding: 16px 0 0;
+            display: flex;
+            justify-content: space-between;
+            /* background-color: rgba(255, 0, 0, 0.2); */
+        }
+
+        #form > dt:last-child > input[type="button"] {
+            display: inline-block;
+            width: calc(100% / 3);
+        }
+
+        #list {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        #list > li {
+            width: calc(100% / 3);
+        }
+
+        .input-msg {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+<article>
+
+    <section class="wrap">
+
+    <dl id="form">
+
+        <div id="dlg">
+            <div id="input">
+                <dt>ユーザーID</dt>
+                <dd><input type="text" id="userId"><label class="input-msg input-userId"></label></dd>
+                <dt>パスワード</dt>
+                <dd><input type="text" id="password"><label class="input-msg input-password"></label></dd>
+                <!-- <input type="button" value="確認" id="confirmBtn"> -->
+            </div>
+            <div id="confirm">
+                <dt>ユーザーID</dt>
+                <dd class="confirm-userId">XXX</dd>
+                <dt>パスワード</dt>
+                <dd class="confirm-password">PPP</dd>
+                <!-- <input type="button" value="登録" id="registBtn"> -->
+            </div>
+            <div id="finish">
+                登録完了
+            </div>
+        </div>
+
+        <dt>
+            <input type="button" value="追加" id="addBtn">
+            <input type="button" value="修正" id="updateBtn">
+            <input type="button" value="削除" id="delBtn">
+        </dt>
+    </dl>
+    </section>
+
+    <section class="wrap">
+    <ul id="list">
+    </ul>
+    </section>
+
+</article>
+
+<script>
+var allData = [],
+    list = $('#list');
+
+$(function(){
+
+    $('#input').hide();
+    $('#confirm').hide();
+    $('#finish').hide();
+
+    if (sessionStorage.getItem("allSampleData")) {
+        allData = JSON.parse(sessionStorage.getItem("allSampleData"));
+        if (allData.length > 0) make_List(allData);
+    }
+
+    let func = function() {
+        return 'test';
+    };
+
+});
+
+
+/* 追加 */
+$('#addBtn').on('click', function(){
+    $('#input').show();
+    $('#confirm').hide();
+    $('#finish').hide();
+
+    $('#userId').prop('disabled', false);
+
+    $('#userId').val('');
+    $('#password').val('');
+
+    $('#dlg').dialog({
+        modal: true,
+        title: '追加', // タイトル
+        width: 550,
+        buttons: {
+            'OK': function() {
+                if ($('#input').is(':visible') == true) {
+                    // 入力画面
+                    inputFunc();
+                    
+                } else if ($('#confirm').is(':visible') == true) {
+                    // 確認画面
+                    confirmFunc();
+                    $('#finish').text('登録');
+
+                } else if ($('#finish').is(':visible') == true) {
+                    // 完了画面
+                    $(this).dialog('close');
+
+                }
+
+            },
+            'キャンセル': function() {
+                $(this).dialog('close');
+            },
+        }
+
+    });
+});
+
+$('#updateBtn').on('click', function(){
+    $('#input').show();
+    $('#confirm').hide();
+    $('#finish').hide();
+
+    // チェックされたデータ取得
+    let checkeUserId = $(':checkbox:checked').first().val();
+    let updateIndex = -1;
+    $.each(allData, function(index) {
+        if (this.userId == checkeUserId) {
+            updateIndex = index;
+            return;
+        }
+    });
+
+    $('#userId').val(allData[updateIndex].userId);
+    $('#password').val(allData[updateIndex].password);
+    
+    $('#userId').prop('disabled', true);
+
+    $('#dlg').dialog({
+        modal: true,
+        title: '修正', // タイトル
+        width: 550,
+        buttons: {
+            'OK': function() {
+                if ($('#input').is(':visible') == true) {
+                    // 入力画面
+                    inputFunc();
+
+                } else if ($('#confirm').is(':visible') == true) {
+                    // 確認画面
+                    confirmUpdateFunc(updateIndex);
+                    $('#finish').text('修正');
+
+                } else if ($('#finish').is(':visible') == true) {
+                    // 完了画面
+                    finishFunc();
+                    
+                    $(this).dialog('close');
+
+                }
+
+            },
+            'キャンセル': function() {
+                $(this).dialog('close');
+            },
+        }
+
+    });
+
+});
+
+/* 削除 */
+$('#delBtn').on('click', function(){
+    if (confirm('削除しますか？') == true) {
+        var ckArray = [], result;
+
+        $('[name="ck"]:checked').each(function(index, elem){
+            ckArray.push($(elem).val());
+        });
+
+        for(var i=0; i < ckArray.length; i++) {
+            result = allData.filter(function( data ) {
+                return data.userId !== ckArray[i];
+            });
+            allData = result;
+        }
+        sessionStorage.setItem('allSampleData', JSON.stringify(allData));
+        if (allData.length > 0) { 
+            make_List( JSON.parse(sessionStorage.getItem("allSampleData")) );
+        } else {
+            $(list).empty();
+        }
+
+    }
+
+});
+
+
+</script>
+</body>
+</html>
